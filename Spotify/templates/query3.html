@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Popular Genres</title>
+
+    <style>
+
+    .menu {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .menu li {
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .menu li:last-child {
+      margin-right: 0;
+    }
+
+    .menu a {
+      display: block;
+      padding: 10px;
+      color: #333;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 5px;
+      background-color: #f5f5f5;
+      transition: background-color 0.3s ease;
+    }
+
+    .menu a:hover {
+      background-color: #333;
+      color: #fff;
+    }
+    body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    }
+
+    h1 {
+        text-align: center;
+    }
+
+    form {
+        margin-bottom: 20px;
+    }
+
+    label {
+        margin-right: 10px;
+    }
+
+    input[type="number"] {
+        width: 80px;
+    }
+
+    button {
+        padding: 5px 10px;
+    }
+
+    #resultsContainer {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .resultItem {
+        margin-bottom: 10px;
+    }
+
+    .resultItem span {
+        font-weight: bold;
+    }
+ </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <ul class="menu">
+        <li><a href="/">CRUD</a></li>
+        <li><a href="/query1">Query 1</a></li>
+        <li><a href="/query2">Query 2</a></li>
+        <li><a href="/query3">Query3</a></li>
+    </ul>
+    <h1>Popular Songs</h1>
+    <label for="year">Year:</label>
+    <input type="number" id="year" name="year">
+    <button id="searchBtn">Search</button>
+
+    <table id="resultsTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Artist</th>
+            </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+    </table>
+
+    <script>
+        $(document).ready(function() {
+            $('#searchBtn').on('click', function() {
+                var year = $('#year').val();
+                if (year !== '') {
+                    $.ajax({
+                        url: '/popular-songs?year=' + year,
+                        type: 'GET',
+                        success: function(data) {
+                            if (data.songs.length > 0) {
+                                var html = '';
+                                data.songs.forEach(function(song) {
+                                    html += '<tr><td>' + song.name + '</td><td>' + song.artists + '</td></tr>';
+                                });
+                                $('#resultsBody').html(html);
+                            } else {
+                                $('#resultsBody').html('<tr><td colspan="2">No popular songs found for the selected year.</td></tr>');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error(error);
+                            $('#resultsBody').html('<tr><td colspan="2">An error occurred while retrieving popular songs.</td></tr>');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

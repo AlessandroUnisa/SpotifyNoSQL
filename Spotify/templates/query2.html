@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CRUD Interface</title>
+  <style>
+    /* Reset dello stile predefinito */
+    .menu {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .menu li {
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .menu li:last-child {
+      margin-right: 0;
+    }
+
+    .menu a {
+      display: block;
+      padding: 10px;
+      color: #333;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 5px;
+      background-color: #f5f5f5;
+      transition: background-color 0.3s ease;
+    }
+
+    .menu a:hover {
+      background-color: #333;
+      color: #fff;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input[type="text"] {
+      width: 300px;
+      padding: 5px;
+    }
+
+    select {
+      width: 200px;
+      padding: 5px;
+    }
+
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<ul class="menu">
+  <li><a href="/">CRUD</a></li>
+  <li><a href="/query1">Query 1</a></li>
+  <li><a href="/query2">Query 2</a></li>
+  <li><a href="/query3">Query3</a></li>
+</ul>
+    <h1>Artists</h1>
+    <table id="artistsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Artists</th>
+                <th>Popularity</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- I dati degli artisti verranno generati qui -->
+        </tbody>
+    </table>
+    <script>
+        $(document).ready(function() {
+            // Funzione per ottenere gli artisti dall'API
+            function getArtists() {
+                $.ajax({
+                    url: '/collection/artist',
+                    type: 'GET',
+                    success: function(data) {
+                        // Genera la tabella degli artisti
+                        generateArtistsTable(data);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(error);
+                    }
+                });
+            }
+
+            // Funzione per generare la tabella degli artisti
+            function generateArtistsTable(artists) {
+                var tableBody = $('#artistsTable tbody');
+                tableBody.empty();
+
+                for (var i = 0; i < artists.length; i++) {
+                    var artist = artists[i];
+                    var row = '<tr>';
+                    row += '<td>' + artist._id + '</td>';
+                    row += '<td>' + artist.artists + '</td>';
+                    row += '<td>' + artist.popularity + '</td>';
+                    row += '</tr>';
+                    tableBody.append(row);
+                }
+            }
+
+            // Richiama la funzione per ottenere gli artisti
+            getArtists();
+        });
+    </script>
+</body>
+</html>

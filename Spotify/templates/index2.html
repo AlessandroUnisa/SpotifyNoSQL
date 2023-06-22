@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CRUD Interface</title>
+  <style>
+    /* Reset dello stile predefinito */
+    .menu {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .menu li {
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .menu li:last-child {
+      margin-right: 0;
+    }
+
+    .menu a {
+      display: block;
+      padding: 10px;
+      color: #333;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 5px;
+      background-color: #f5f5f5;
+      transition: background-color 0.3s ease;
+    }
+
+    .menu a:hover {
+      background-color: #333;
+      color: #fff;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input[type="text"] {
+      width: 300px;
+      padding: 5px;
+    }
+
+    select {
+      width: 200px;
+      padding: 5px;
+    }
+
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<ul class="menu">
+  <li><a href="/">CRUD</a></li>
+  <li><a href="/query1">Query 1</a></li>
+    <li><a href="/query2">Query 2</a></li>
+  <li><a href="/query3">Query3</a></li>
+</ul>
+  <h1>CRUD Operations</h1>
+  <h2>Select Collection</h2>
+  <select id="collectionSelect">
+    <option value="artist">Artist</option>
+    <option value="song">Song</option>
+    <option value="genres">Genres</option>
+  </select>
+      <div id="editPanel" style="display: none;">
+    <h2>Modifica Oggetto</h2>
+    <form id="editForm">
+      <!-- Dynamic form fields will be added here -->
+    </form>
+    <button id="saveChangesBtn">Salva Modifiche</button>
+      <button id="cancelEditBtn">Annulla</button>
+  </div>
+  <h2>Insert Element</h2>
+  <form id="insertForm">
+    <div>
+      <label for="attributeInput"></label>
+      <input type="text" id="attributeInput" placeholder="Attribute">
+    </div>
+    <div>
+      <label for="valueInput"></label>
+      <input type="text" id="valueInput" placeholder="Value">
+    </div>
+    <div id="attributeFields">
+      <!-- Existing attributes will be populated here -->
+    </div>
+    <button type="button" id="addAttributeBtn">Add Attribute</button>
+    <button type="submit">Insert</button>
+  </form>
+
+  <div style="display: flex; align-items: center;">
+    <h2>Ricerca</h2>
+    <div style="margin-right: 10px;">
+      <label for="fieldInput"></label>
+      <input type="text" id="fieldInput" placeholder="Campo di ricerca">
+    </div>
+    <div style="margin-right: 10px;">
+      <label for="queryInput"></label>
+      <input type="text" id="queryInput" placeholder="Query di ricerca">
+    </div>
+    <button id="searchButton">Cerca</button>
+  </div>
+
+  <h2>Risultati della Ricerca:</h2>
+  <ul id="searchResults"></ul>
+
+  <button id="showElementsBtn">Show Elements</button>
+
+
+
+  <script>
+  $(document).ready(function() {
+    $('#collectionSelect').change(function() {
+      var collection = $(this).val();
+
+      $.get('/collection/' + collection + '/attributes', function(data) {
+        var attributeFields = $('#attributeFields');
+        attributeFields.empty();
+
+        data.forEach(function(attribute) {
+          var attributeField = $('<div class="attributeField"></div>');
+          var attributeInput = $('<input type="text" class="attributeInput">')
+            .attr('name', attribute)
+            .attr('placeholder', attribute);
+          var removeBtn = $('<button class="removeAttributeBtn">Remove</button>');
+
+          attributeField.append(attributeInput, removeBtn);
+          attributeFields.append(attributeField);
+        });
+      });
+    });
+
+    $('#insertForm').submit(function(event) {
+      event.preventDefault();
+
+      var collection = $('#collectionSelect').val();
+      var attributes = [];
+
+      $('.attributeField').each(function() {
+        var attribute = $(this).find('input.attributeInput').attr('name');
+        var value = $(this).find('input.attributeInput').val().trim();
+
+        if (attribute !== '' && value !== '') {
+          attributes.push({ attribute: attribute, value: value });
+        }
+      });
+
+      if (attributes.length > 0) {
+        var data = {
+          attributes: attributes
+        };
+
+        $.ajax({
+          url: '/collection/' + collection + '/insert',
+          method: 'POST',
+          data: JSON.stringify(data),
+          contentType: 'application/json',
+          success: function(response) {
+            console.log('Insert successful:', response);
+            // Visualizza un alert con il messaggio di conferma
+            alert(response.message);
+          },
+          error: function(xhr, status, error) {
+            console.log('Insert failed:', error);
+          }
+        });
+      } else {
+        console.log('At least one attribute is required');
+      }
+    });
+
+    $(document).on('click', '.removeAttributeBtn', function() {
+      $(this).closest('.attributeField').remove();
+    });
+
+    $('#addAttributeBtn').click(function() {
+      var attributeField = $('<div class="attributeField"></div>');
+      var attributeInput = $('<input type="text" class="attributeInput">')
+        .attr('name', $('#attributeInput').val().trim())
+        .attr('placeholder', 'Attribute');
+      var removeBtn = $('<button class="removeAttributeBtn">Remove</button>');
+
+      attributeField.append(attributeInput, removeBtn);
+      $('#attributeFields').append(attributeField);
+    });
+
+    function removeElement(documentId) {
+      var collection = $('#collectionSelect').val();
+
+      $.post('/collection/' + collection + '/' + documentId + '/remove', function(response) {
+        console.log('Element removed successfully:', response);
+
+        // Remove the element from the search results list
+        $('#searchResults li[data-document-id="' + documentId + '"]').remove();
+
+        // Remove the element from the full document view
+        $('#elementDetails[data-document-id="' + documentId + '"]').remove();
+      })
+      .fail(function(xhr, status, error) {
+        console.log('Element removal failed:', error);
+      });
+    }
+
+    $('#showElementsBtn').click(function() {
+      var collection = $('#collectionSelect').val();
+
+      $.get('/collection/' + collection, function(data) {
+        var elementList = $('#searchResults');
+        elementList.empty();
+
+        data.forEach(function(element) {
+          var listItem = $('<li>').text(JSON.stringify(element));
+          listItem.attr('data-document-id', element._id); // Add the data-document-id attribute
+          elementList.append(listItem);
+
+          // Add the remove button for each element
+          var removeBtn = $('<button class="removeElementBtn">Remove</button>');
+          removeBtn.attr('data-document-id', element._id); // Add the data-document-id attribute to the button
+          listItem.append(removeBtn);
+
+          // Add the edit button for each element
+          var editBtn = $('<button class="editElementBtn">Edit</button>');
+          editBtn.attr('data-document-id', element._id); // Add the data-document-id attribute to the button
+          listItem.append(editBtn);
+        });
+      });
+    });
+
+    $(document).on('click', '.removeElementBtn', function() {
+      var documentId = $(this).attr('data-document-id');
+      removeElement(documentId);
+    });
+$('#searchButton').click(function() {
+      var collection = $('#collectionSelect').val();
+      var field = $('#fieldInput').val();
+      var query = encodeURIComponent($('#queryInput').val());
+
+      if (field && query) {
+        $.get('/collection/' + collection + '/search', { attributes: field, query: query })
+          .done(function(data) {
+            var searchResults = $('#searchResults');
+            searchResults.empty();
+
+            if (Array.isArray(data) && data.length > 0) {
+                data.forEach(function(item) {
+                var listItem = $('<li>').text(item[field]);
+                listItem.attr('data-document-id', item._id); // Add the data-document-id attribute
+                searchResults.append(listItem);
+
+                // Add the remove button for each element
+                var removeBtn = $('<button class="removeElementBtn">Remove</button>');
+                removeBtn.attr('data-document-id', item._id); // Add the data-document-id attribute to the button
+                listItem.append(removeBtn);
+
+                // Add the edit button for each element
+                var editBtn = $('<button class="editElementBtn">Edit</button>');
+                editBtn.attr('data-document-id', item._id); // Add the data-document-id attribute to the button
+                listItem.append(editBtn);
+              });
+            }  else {
+                  var noResults = $('<li>').text('No results found.');
+                  searchResults.append(noResults);
+            }
+          })
+          .fail(function(xhr, status, error) {
+            var errorMessage = xhr.responseText ? xhr.responseText : 'Error in the request.';
+            var errorItem = $('<li>').text(errorMessage);
+            $('#searchResults').empty().append(errorItem);
+          });
+      } else {
+        var missingFields = $('<li>').text('Enter both the field and the query.');
+        $('#searchResults').empty().append(missingFields);
+      }
+    });
+
+
+function openEditForm(documentId) {
+  var collection = $('#collectionSelect').val();
+
+  $.get('/collection/' + collection + '/'+ documentId + '/attributes' , function(data) {
+    $('#editForm').empty();
+
+    if (data && typeof data === 'object') {
+      Object.keys(data).forEach(function(key) {
+        var attributeField = $('<div class="attributeField"></div>');
+        var attributeLabel = $('<label>').text(key);
+        var attributeInput = $('<input type="text" class="attributeInput">')
+          .attr('name', key)
+          .val(data[key]);
+
+        // Aggiungi un attributo 'data-attribute' sul campo di input con il nome dell'attributo
+        attributeInput.attr('data-attribute', key);
+
+        // Aggiungi l'evento di cambio valore all'input
+        attributeInput.on('input', function() {
+          var attribute = $(this).attr('data-attribute');
+          var value = $(this).val().trim();
+
+          // Aggiorna il valore dell'attributo nell'oggetto 'data'
+          data[attribute] = value;
+        });
+
+        attributeField.append(attributeLabel, attributeInput);
+        $('#editForm').append(attributeField);
+      });
+    } else {
+      console.log('Invalid data received');
+    }
+    // Salvare l'ID del documento corrente nella variabile globale
+    currentDocumentId = documentId;
+    $('#editPanel').show();
+  });
+}
+
+$(document).on('click', '.editElementBtn', function() {
+  var documentId = $(this).attr('data-document-id');
+  openEditForm(documentId);
+});
+
+$('#saveChangesBtn').click(function() {
+  var collection = $('#collectionSelect').val();
+  var documentId = currentDocumentId;
+  var data = {};
+
+  $('.attributeField').each(function() {
+    var attribute = $(this).find('input.attributeInput').attr('name');
+    var value = $(this).find('input.attributeInput').val().trim();
+
+    if (attribute !== '' && value !== '') {
+      data[attribute] = value;
+    }
+  });
+
+  if (Object.keys(data).length > 0) {
+    $.ajax({
+      url: '/collection/' + collection + '/' + documentId + '/edit',
+      method: 'POST',
+      data: JSON.stringify({ attributes: data }),
+      contentType: 'application/json',
+      success: function(response) {
+        console.log('Edit successful:', response);
+        $('#editPanel').hide();
+      },
+      error: function(xhr, status, error) {
+        console.log('Edit failed:', error);
+      }
+    });
+  } else {
+    console.log('At least one attribute is required');
+  }
+});
+
+$('#cancelEditBtn').click(function() {
+  $('#editPanel').hide();
+});
+
+});
+
+
+
+
+</script>
+
+
+</body>
+</html>

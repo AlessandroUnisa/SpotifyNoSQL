@@ -1,0 +1,37 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+h1 {
+    text-align: center;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+label {
+    margin-right: 10px;
+}
+
+input[type="number"] {
+    width: 80px;
+}
+
+button {
+    padding: 5px 10px;
+}
+
+#resultsContainer {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.resultItem {
+    margin-bottom: 10px;
+}
+
+.resultItem span {
+    font-weight: bold;
+}

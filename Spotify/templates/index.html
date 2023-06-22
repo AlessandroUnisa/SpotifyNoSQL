@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CRUD Interface</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <h1>CRUD Operations</h1>
+
+  <h2>Select Collection</h2>
+  <select id="collectionSelect">
+    <option value="eventCollection">Event Collection</option>
+    <option value="userCollection">User Collection</option>
+    <option value="categoryCollection">Category Collection</option>
+    <option value="venueCollection">Venue Collection</option>
+  </select>
+
+  <button id="showElementsBtn">Show Elements</button>
+
+  <h2>Elements</h2>
+  <ul id="elementList"></ul>
+
+  <script>
+    $(document).ready(function() {
+      $('#showElementsBtn').click(function() {
+        var collection = $('#collectionSelect').val();
+
+        $.get('/collection/' + collection, function(data) {
+          var elementList = $('#elementList');
+          elementList.empty();
+
+          data.forEach(function(element) {
+            var listItem = $('<li>').text(JSON.stringify(element));
+            elementList.append(listItem);
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

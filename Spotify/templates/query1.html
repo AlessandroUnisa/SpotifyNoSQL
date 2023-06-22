@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Graphics</title>
+  <style>
+    /* Reset dello stile predefinito */
+    .menu {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .menu li {
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .menu li:last-child {
+      margin-right: 0;
+    }
+
+    .menu a {
+      display: block;
+      padding: 10px;
+      color: #333;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 5px;
+      background-color: #f5f5f5;
+      transition: background-color 0.3s ease;
+    }
+
+    .menu a:hover {
+      background-color: #333;
+      color: #fff;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input[type="text"] {
+      width: 300px;
+      padding: 5px;
+    }
+
+    select {
+      width: 200px;
+      padding: 5px;
+    }
+
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<ul class="menu">
+  <li><a href="/">CRUD</a></li>
+  <li><a href="/query1">Query 1</a></li>
+  <li><a href="/query2">Query 2</a></li>
+  <li><a href="/query3">Query3</a></li>
+</ul>
+
+    <h1>Grafico a Barre</h1>
+    <div>
+        <label for="collection-select">Seleziona la collezione:</label>
+        <select id="collection-select">
+            <option value="artist">Artisti</option>
+            <option value="song">Canzoni</option>
+            <option value="generes">Generi</option>
+        </select>
+    </div>
+<div>
+    <label for="param-select">Seleziona il parametro:</label>
+    <select id="param-select">
+        <option value="danceability">Danceability</option>
+        <option value="duration_ms">Duration (ms)</option>
+        <option value="energy">Energy</option>
+        <option value="instrumentalness">Instrumentalness</option>
+        <option value="liveness">Liveness</option>
+        <option value="loudness">Loudness</option>
+        <option value="speechiness">Speechiness</option>
+        <option value="tempo">Tempo</option>
+        <option value="valence">Valence</option>
+        <option value="popularity">Popularity</option>
+    </select>
+</div>
+<button id="generate-chart-button">Genera Grafico</button>
+<div id="chart-container">
+    <canvas id="barChart"></canvas>
+</div>
+<script>
+    // Funzione per ottenere i dati dalla collezione selezionata
+    function getTopParameter(collectionName, parameter) {
+      $.ajax({
+        url: '/collection/' + collectionName + '/' + parameter + '/top/10',
+        type: 'GET',
+        success: function(data) {
+          // Chiamata riuscita, elabora i dati e genera il grafico
+          generateBarChart(data, parameter);
+        },
+        error: function(error) {
+          // Gestisci l'errore della chiamata AJAX
+          console.log(error);
+        }
+      });
+    }
+
+    // Dichiarazione di una variabile per mantenere il riferimento al grafico
+    var barChart;
+
+    function generateBarChart(data, parameter) {
+      // Distruggi il grafico esistente
+      if (barChart) {
+        barChart.destroy();
+      }
+
+      // Estrai i dati rilevanti per il grafico
+      var labels = [];
+      var parameterValues = [];
+
+      for (var i = 0; i < data.length; i++) {
+        labels.push(data[i].artists);
+        parameterValues.push(data[i][parameter]);
+      }
+
+      // Configura il grafico
+      var ctx = document.getElementById('barChart').getContext('2d');
+      barChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: parameter,
+            data: parameterValues,
+            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    // Esempio di utilizzo
+    $(document).ready(function() {
+      // Evento di selezione della collezione
+      $('#collection-select').on('change', function() {
+        var selectedCollection = $(this).val();
+        var selectedParameter = $('#param-select').val();
+        getTopParameter(selectedCollection, selectedParameter);
+      });
+
+      // Evento di selezione del parametro
+      $('#param-select').on('change', function() {
+        var selectedParameter = $(this).val();
+        var selectedCollection = $('#collection-select').val();
+        getTopParameter(selectedCollection, selectedParameter);
+      });
+
+      // Evento di clic sul pulsante "Genera Grafico"
+      $('#generate-chart-button').on('click', function() {
+        var selectedCollection = $('#collection-select').val();
+        var selectedParameter = $('#param-select').val();
+        getTopParameter(selectedCollection, selectedParameter);
+      });
+    });
+</script>
+<!--
+    <button id="generate-chart-button">Genera Grafico</button>
+    <div id="chart-container">
+        <canvas id="barChart"></canvas>
+    </div>
+    <script>
+        // Funzione per ottenere i dati dalla collezione selezionata
+        function getTopDanceability(collectionName) {
+          $.ajax({
+            url: '/collection/' + collectionName + '/danceability/top/10',
+            type: 'GET',
+            success: function(data) {
+              // Chiamata riuscita, elabora i dati e genera il grafico
+              generateBarChart(data);
+            },
+            error: function(error) {
+              // Gestisci l'errore della chiamata AJAX
+              console.log(error);
+            }
+          });
+        }
+
+        // Dichiarazione di una variabile per mantenere il riferimento al grafico
+        var barChart;
+
+        function generateBarChart(data) {
+          // Distruggi il grafico esistente
+          if (barChart) {
+            barChart.destroy();
+          }
+
+          // Estrai i dati rilevanti per il grafico
+          var labels = [];
+          var danceabilityValues = [];
+
+          for (var i = 0; i < data.length; i++) {
+            labels.push(data[i].artists);
+            danceabilityValues.push(data[i].danceability);
+          }
+
+          // Configura il grafico
+          var ctx = document.getElementById('barChart').getContext('2d');
+          barChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Danceability',
+                data: danceabilityValues,
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  max: 1
+                }
+              }
+            }
+          });
+        }
+
+
+        // Esempio di utilizzo
+        $(document).ready(function() {
+          // Evento di selezione della collezione
+          $('#collection-select').on('change', function() {
+            var selectedCollection = $(this).val();
+            getTopDanceability(selectedCollection);
+          });
+
+          // Evento di clic sul pulsante "Genera Grafico"
+          $('#generate-chart-button').on('click', function() {
+            var selectedCollection = $('#collection-select').val();
+            getTopDanceability(selectedCollection);
+          });
+        });
+    </script>-->
+</body>
+</html>
