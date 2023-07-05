@@ -82,6 +82,17 @@
     li {
       margin-bottom: 5px;
     }
+#chart-container {
+  width: 100%;
+  height: 400px; /* Imposta l'altezza desiderata per il grafico */
+  max-width: 100%;
+  overflow: hidden; /* Nasconde eventuali elementi che superano le dimensioni del contenitore */
+}
+
+canvas {
+  display: block;
+  width: 100%;
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -123,7 +134,7 @@
     <canvas id="barChart"></canvas>
 </div>
 <script>
-    // Funzione per ottenere i dati dalla collezione selezionata
+// Funzione per ottenere i dati dalla collezione selezionata
     function getTopParameter(collectionName, parameter) {
       $.ajax({
         url: '/collection/' + collectionName + '/' + parameter + '/top/10',
@@ -153,7 +164,7 @@
       var parameterValues = [];
 
       for (var i = 0; i < data.length; i++) {
-        labels.push(data[i].artists);
+        labels.push(data[i].name);
         parameterValues.push(data[i][parameter]);
       }
 
@@ -173,6 +184,7 @@
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           scales: {
             y: {
               beginAtZero: true
@@ -205,6 +217,7 @@
         getTopParameter(selectedCollection, selectedParameter);
       });
     });
+
 </script>
 <!--
     <button id="generate-chart-button">Genera Grafico</button>

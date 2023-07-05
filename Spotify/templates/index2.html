@@ -82,6 +82,44 @@
     li {
       margin-bottom: 5px;
     }
+     .elementList {
+      padding: 0;
+    }
+
+    .elementItem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .elementItem:last-child {
+      border-bottom: none;
+    }
+
+    .elementData {
+      flex-grow: 1;
+    }
+
+    .elementActions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .elementActions button {
+      padding: 5px 10px;
+      background-color: #ccc;
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .elementActions button:hover {
+      background-color: #999;
+    }
   </style>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
@@ -97,7 +135,7 @@
   <select id="collectionSelect">
     <option value="artist">Artist</option>
     <option value="song">Song</option>
-    <option value="genres">Genres</option>
+    <option value="generes">Generes</option>
   </select>
       <div id="editPanel" style="display: none;">
     <h2>Modifica Oggetto</h2>
@@ -109,14 +147,6 @@
   </div>
   <h2>Insert Element</h2>
   <form id="insertForm">
-    <div>
-      <label for="attributeInput"></label>
-      <input type="text" id="attributeInput" placeholder="Attribute">
-    </div>
-    <div>
-      <label for="valueInput"></label>
-      <input type="text" id="valueInput" placeholder="Value">
-    </div>
     <div id="attributeFields">
       <!-- Existing attributes will be populated here -->
     </div>
@@ -173,8 +203,14 @@
       var attributes = [];
 
       $('.attributeField').each(function() {
-        var attribute = $(this).find('input.attributeInput').attr('name');
-        var value = $(this).find('input.attributeInput').val().trim();
+        var attribute = $(this).find('input.attributeInput[name="attribute"]').val();
+        if (attribute !== undefined) {
+          attribute = attribute.trim();
+        }
+       var value = $(this).find('input.attributeInput[name="value"]').val();
+        if (value !== undefined) {
+          value = value.trim();
+        }
 
         if (attribute !== '' && value !== '') {
           attributes.push({ attribute: attribute, value: value });
@@ -211,14 +247,21 @@
 
     $('#addAttributeBtn').click(function() {
       var attributeField = $('<div class="attributeField"></div>');
+
       var attributeInput = $('<input type="text" class="attributeInput">')
-        .attr('name', $('#attributeInput').val().trim())
+        .attr('name', 'attribute')
         .attr('placeholder', 'Attribute');
+
+      var valueInput = $('<input type="text" class="attributeInput">')
+        .attr('name', 'value')
+        .attr('placeholder', 'Value');
+
       var removeBtn = $('<button class="removeAttributeBtn">Remove</button>');
 
-      attributeField.append(attributeInput, removeBtn);
+      attributeField.append(attributeInput, valueInput, removeBtn);
       $('#attributeFields').append(attributeField);
     });
+
 
     function removeElement(documentId) {
       var collection = $('#collectionSelect').val();
@@ -237,7 +280,7 @@
       });
     }
 
-    $('#showElementsBtn').click(function() {
+  $('#showElementsBtn').click(function() {
       var collection = $('#collectionSelect').val();
 
       $.get('/collection/' + collection, function(data) {
@@ -245,19 +288,22 @@
         elementList.empty();
 
         data.forEach(function(element) {
-          var listItem = $('<li>').text(JSON.stringify(element));
-          listItem.attr('data-document-id', element._id); // Add the data-document-id attribute
-          elementList.append(listItem);
+          var listItem = $('<li class="elementItem"></li>');
+          var elementData = $('<div class="elementData"></div>').text(JSON.stringify(element));
+          var elementActions = $('<div class="elementActions"></div>');
 
-          // Add the remove button for each element
+          // Aggiungi il pulsante di rimozione per ogni elemento
           var removeBtn = $('<button class="removeElementBtn">Remove</button>');
-          removeBtn.attr('data-document-id', element._id); // Add the data-document-id attribute to the button
-          listItem.append(removeBtn);
+          removeBtn.attr('data-document-id', element._id); // Aggiungi l'attributo data-document-id al pulsante
+          elementActions.append(removeBtn);
 
-          // Add the edit button for each element
+          // Aggiungi il pulsante di modifica per ogni elemento
           var editBtn = $('<button class="editElementBtn">Edit</button>');
-          editBtn.attr('data-document-id', element._id); // Add the data-document-id attribute to the button
-          listItem.append(editBtn);
+          editBtn.attr('data-document-id', element._id); // Aggiungi l'attributo data-document-id al pulsante
+          elementActions.append(editBtn);
+
+          listItem.append(elementData, elementActions);
+          elementList.append(listItem);
         });
       });
     });
@@ -399,4 +445,5 @@ $('#cancelEditBtn').click(function() {
 
 
 </body>
+
 </html>

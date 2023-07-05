@@ -1,11 +1,9 @@
-import json
+
 
 from flask import Flask, render_template, request, jsonify
 from pymongo import MongoClient, errors
 import re
 from datetime import datetime
-from bson.json_util import dumps
-from pymongo.errors import PyMongoError
 
 app = Flask(__name__)
 client = MongoClient('mongodb://localhost:27017')
@@ -45,11 +43,7 @@ def get_collection(collection_name):
 
     return jsonify(items)
 
-from bson import json_util
 
-from bson import json_util
-
-from bson import json_util
 
 @app.route('/collection/<collection_name>/search')
 def search_collection(collection_name):
@@ -124,7 +118,7 @@ def get_collection_attributes(collection_name):
     attribute_names = list(attributes.keys())
     attribute_names.remove('_id')  # Exclude the _id attribute
     return jsonify(attribute_names)
-
+'''
 @app.route('/collection/<collection_name>/insert', methods=['POST'])
 def insert_document(collection_name):
     if collection_name not in db.list_collection_names():
@@ -136,21 +130,22 @@ def insert_document(collection_name):
         attributes = data.get('attributes')
         document = {}
 
-        for attr in attributes:
-            attribute = attr['attribute']
-            value = attr['value']
+        if attributes:
+            for attr in attributes:
+                attribute = attr['attribute']
+                value = attr['value']
 
-            # Verifica se il valore è numerico e converte in float o int
-            if isinstance(value, (int, float)):
-                document[attribute] = value
-            else:
-                try:
-                    document[attribute] = int(value)
-                except ValueError:
+                # Verifica se il valore è numerico e converte in float o int
+                if isinstance(value, (int, float)):
+                    document[attribute] = value
+                else:
                     try:
-                        document[attribute] = float(value)
+                        document[attribute] = int(value)
                     except ValueError:
-                        document[attribute] = value
+                        try:
+                            document[attribute] = float(value)
+                        except ValueError:
+                            document[attribute] = value
 
         result = collection.insert_one(document)
         # Invia una risposta con un messaggio di conferma
@@ -159,6 +154,43 @@ def insert_document(collection_name):
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+'''
+@app.route('/collection/<collection_name>/insert', methods=['POST'])
+def insert_document(collection_name):
+    if collection_name not in db.list_collection_names():
+        return jsonify({'error': 'Invalid collection name'}), 404
+
+    try:
+        collection = db[collection_name]
+        data = request.get_json(force=True)
+        attributes = data.get('attributes')
+        document = {}
+
+        if attributes:
+            for attr in attributes:
+                attribute = attr.get('attribute')
+                value = attr.get('value')
+
+                if attribute is not None and value is not None:
+                    if isinstance(value, (int, float)):
+                        document[attribute] = value
+                    else:
+                        try:
+                            document[attribute] = int(value)
+                        except ValueError:
+                            try:
+                                document[attribute] = float(value)
+                            except ValueError:
+                                document[attribute] = value
+
+        result = collection.insert_one(document)
+        response = {'inserted_id': str(result.inserted_id), 'message': 'Elemento inserito correttamente'}
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/collection/<collection_name>/<document_id>/remove', methods=['POST'])
 def delete_document(collection_name, document_id):
@@ -178,10 +210,6 @@ def remove_attribute(collection_name, attribute):
         return jsonify({'message': 'Attribute removed successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
-
-
 @app.route('/collection/<collection_name>/<document_id>/edit', methods=['POST'])
 def edit_document(collection_name, document_id):
     document_id = ObjectId(document_id)
@@ -235,6 +263,9 @@ def remove_attribute(collection_name, document_id):
 def pagina():
     return render_template('query1.html')
 
+
+from bson import ObjectId
+
 @app.route('/collection/<collection_name>/<parameter>/top/10', methods=['GET'])
 def get_top_parameter(collection_name, parameter):
     collection = db[collection_name]
@@ -247,16 +278,35 @@ def get_top_parameter(collection_name, parameter):
     if parameter not in valid_parameters:
         return jsonify({'error': 'Invalid parameter'}), 400
 
-    # Ottieni i primi 10 documenti ordinati per il parametro selezionato in ordine decrescente
-    items = list(collection.find().sort(parameter, -1).limit(10))
+    # Esegue query per le canzoni
+    songs = list(db['song'].find({parameter: {'$exists': True}}).sort(parameter, -1).limit(10))
 
-    # Converte l'oggetto ObjectId in stringa
+    # Esegue query per gli artisti
+    artists = list(db['artist'].find({parameter: {'$exists': True}}).sort(parameter, -1).limit(10))
+
+    # Esegue query per gli generi
+    generes = list(db['generes'].find({parameter: {'$exists': True}}).sort(parameter, -1).limit(10))
+
+    # Unisce i risultati delle query
+    items = songs + artists + generes
+
+    # Converte le stringhe contenenti numeri in float
     for item in items:
-        item['_id'] = str(item['_id'])
+        for key, value in item.items():
+            if isinstance(value, str) and value.isdigit():
+                item[key] = float(value)
+            elif isinstance(value, datetime.datetime):
+                item[key] = value.strftime('%Y-%m-%d %H:%M:%S')
+            elif isinstance(value, ObjectId):
+                item[key] = str(value)
 
     return jsonify(items)
 
-    return jsonify(items)
+
+
+
+
+
 @app.route('/query2')
 def pagina2():
     return render_template('query2.html')
@@ -276,6 +326,7 @@ def findArtistsWithConditions():
     for artist in artists:
         artist['_id'] = str(artist['_id'])
 
+
     return artists
 
 @app.route('/artists')
@@ -294,6 +345,10 @@ from bson import ObjectId
 
 from bson import json_util
 
+import arrow
+
+import datetime
+
 @app.route('/popular-songs')
 def popular_songs():
     year = request.args.get('year')
@@ -309,8 +364,9 @@ def popular_songs():
         for song in songs:
             # Converte l'oggetto ObjectId in una rappresentazione JSON
             song['_id'] = str(song['_id'])
+            song['release_date'] = str(song['release_date'])
             results.append(song)
-
+        print(results)
         return jsonify({'songs': results})
 
     except (ValueError, TypeError) as e:
@@ -318,7 +374,6 @@ def popular_songs():
 
     except errors.PyMongoError as e:
         return jsonify({'error': str(e)}), 500
-
 
 
 
